@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from .cli import predict_with_confidence
 from .rules import apply_rules, load_whitelist
@@ -50,6 +50,11 @@ def get_whitelist() -> List[str]:
   if _WHITELIST is None:
     _WHITELIST = list(load_whitelist(str(DEFAULT_WHITELIST_PATH)))
   return _WHITELIST
+
+
+@app.get("/health", response_class=JSONResponse)
+def health() -> JSONResponse:
+    return JSONResponse({"status": "ok"})
 
 
 def top_keywords(model: object, text: str, top_n: int = 8) -> List[Tuple[str, float]]:
