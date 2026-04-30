@@ -3,6 +3,7 @@ pyproject.toml
 src/spamdetector/__init__.py
 src/spamdetector/cli.py
 src/spamdetector/pipeline.py
+src/spamdetector/rules.py
 src/spamdetector/train.py
 src/spamdetector/web.py
 src/spamdetector.egg-info/PKG-INFO

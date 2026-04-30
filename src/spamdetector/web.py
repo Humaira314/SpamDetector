@@ -46,15 +46,10 @@ def get_model_error() -> Optional[str]:
 
 
 def get_whitelist() -> List[str]:
-  global _WHITELIST
-  if _WHITELIST is None:
-    _WHITELIST = list(load_whitelist(str(DEFAULT_WHITELIST_PATH)))
-  return _WHITELIST
-
-
-@app.get("/health", response_class=JSONResponse)
-def health() -> JSONResponse:
-    return JSONResponse({"status": "ok"})
+    global _WHITELIST
+    if _WHITELIST is None:
+        _WHITELIST = list(load_whitelist(str(DEFAULT_WHITELIST_PATH)))
+    return _WHITELIST
 
 
 def top_keywords(model: object, text: str, top_n: int = 8) -> List[Tuple[str, float]]:
@@ -79,7 +74,7 @@ def render_page(
     result_label: Optional[str] = None,
     confidence: Optional[float] = None,
     keywords: Optional[List[Tuple[str, float]]] = None,
-  rule: Optional[str] = None,
+    rule: Optional[str] = None,
     error: Optional[str] = None,
 ) -> HTMLResponse:
     safe_message = escape(message)
@@ -110,104 +105,191 @@ def render_page(
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
   <title>Spam Detector</title>
   <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
     :root {{
-      --bg: #f7f3ee;
+      --bg: #f6f2ed;
       --card: #ffffff;
-      --text: #222222;
-      --muted: #6b6b6b;
-      --spam: #ffe2e2;
-      --spam-border: #ff6b6b;
-      --ham: #e2f6e9;
-      --ham-border: #2e9f63;
-      --accent: #1f4b99;
+      --ink: #1c1b18;
+      --muted: #6d6a66;
+      --border: rgba(24, 24, 24, 0.08);
+      --shadow: 0 24px 60px rgba(23, 24, 28, 0.12);
+      --accent: #2f6fed;
+      --accent-deep: #173a8f;
+      --accent-soft: rgba(47, 111, 237, 0.16);
+      --spam: #ffe6e3;
+      --spam-strong: #ff6161;
+      --ham: #e7f7ee;
+      --ham-strong: #1e9a63;
+      --warning: #b00020;
     }}
+
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: "Space Grotesk", "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at top right, #eef3ff 0%, #f6f2ed 45%, #f6f2ed 100%);
+      color: var(--ink);
       line-height: 1.5;
+      min-height: 100vh;
     }}
-    .wrap {{ max-width: 960px; margin: 32px auto; padding: 0 16px; }}
-    .header {{ display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }}
-    .header h1 {{ margin: 0; font-size: 32px; }}
-    .header p {{ margin: 0; color: var(--muted); }}
-    .grid {{ display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }}
-    .card {{ background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }}
-    label {{ font-weight: 600; display: block; margin-bottom: 8px; }}
+
+    .bg-orb {{
+      position: fixed;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(47, 111, 237, 0.35), rgba(47, 111, 237, 0));
+      opacity: 0.7;
+      z-index: 0;
+    }}
+    .orb-one {{ top: -120px; right: -40px; }}
+    .orb-two {{ bottom: -160px; left: -60px; background: radial-gradient(circle at 60% 40%, rgba(0, 169, 143, 0.3), rgba(0, 169, 143, 0)); }}
+
+    .page {{ position: relative; padding: 48px 16px 64px; z-index: 1; }}
+    .container {{ max-width: 1080px; margin: 0 auto; }}
+    .hero {{ display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }}
+    .eyebrow {{ text-transform: uppercase; letter-spacing: 0.22em; font-size: 12px; color: var(--muted); font-weight: 600; }}
+    .hero h1 {{ margin: 8px 0 6px; font-size: clamp(32px, 5vw, 54px); }}
+    .hero p {{ margin: 0; max-width: 520px; color: var(--muted); }}
+
+    .status-pill {{
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 12px 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 2px;
+    }}
+    .status-pill span {{ font-size: 12px; color: var(--muted); }}
+    .status-pill strong {{ font-size: 14px; }}
+
+    .grid {{ display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 24px; margin-top: 28px; }}
+    .card {{ background: var(--card); padding: 22px; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow); }}
+
+    label {{ font-weight: 600; display: block; margin-bottom: 10px; color: var(--muted); font-size: 14px; }}
     textarea {{
       width: 100%;
-      min-height: 280px;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #d6d6d6;
-      font-size: 14px;
+      min-height: 260px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: #f8f8f7;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+      font-size: 15px;
       resize: vertical;
+      transition: box-shadow 0.2s ease, border 0.2s ease, background 0.2s ease;
     }}
+    textarea:focus {{
+      outline: none;
+      background: #ffffff;
+      border-color: rgba(47, 111, 237, 0.4);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }}
+    textarea::placeholder {{ color: rgba(109, 106, 102, 0.7); }}
+
+    .actions {{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }}
     button {{
-      margin-top: 12px;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
       color: #ffffff;
       border: none;
-      padding: 10px 18px;
-      border-radius: 10px;
+      padding: 12px 22px;
+      border-radius: 999px;
       font-weight: 600;
       cursor: pointer;
+      box-shadow: 0 14px 28px rgba(47, 111, 237, 0.24);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }}
-    .result {{ padding: 16px; border-radius: 12px; border: 2px solid transparent; }}
-    .result.spam {{ background: var(--spam); border-color: var(--spam-border); }}
-    .result.ham {{ background: var(--ham); border-color: var(--ham-border); }}
+    button:hover {{ transform: translateY(-1px); box-shadow: 0 18px 32px rgba(47, 111, 237, 0.28); }}
+
+    .hint {{ font-size: 12px; color: var(--muted); }}
+    .meta-stack {{ margin-top: 16px; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }}
+
+    .result {{ padding: 18px; border-radius: 18px; border: 2px solid transparent; background: #f7f6f4; min-height: 130px; animation: floatIn 0.45s ease; }}
+    .result.spam {{ background: var(--spam); border-color: var(--spam-strong); }}
+    .result.ham {{ background: var(--ham); border-color: var(--ham-strong); }}
     .result.hidden {{ display: none; }}
-    .result h2 {{ margin: 0 0 6px 0; }}
+    .result h2 {{ margin: 4px 0 6px; font-size: 26px; letter-spacing: 0.02em; }}
+    .result-label {{ text-transform: uppercase; font-size: 11px; letter-spacing: 0.2em; color: var(--muted); }}
     .meta {{ color: var(--muted); font-size: 13px; }}
-    .error {{ margin-bottom: 12px; color: #b00020; font-weight: 600; }}
-    ul {{ list-style: none; padding: 0; margin: 12px 0 0 0; }}
-    li {{ display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #efefef; }}
-    li:last-child {{ border-bottom: none; }}
+    .headline {{ margin-top: 16px; font-weight: 600; color: var(--muted); }}
+
+    .keywords {{ list-style: none; padding: 0; margin: 12px 0 0 0; display: grid; gap: 8px; }}
+    .keywords li {{ display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); background: #ffffff; }}
     .term {{ font-weight: 600; }}
-    .score {{ color: var(--muted); }}
-    .footer {{ margin-top: 16px; color: var(--muted); font-size: 12px; }}
-    @media (max-width: 820px) {{
+    .score {{ color: var(--muted); font-variant-numeric: tabular-nums; }}
+
+    .error {{ margin: 18px 0; padding: 12px 16px; background: #ffecec; border: 1px solid #ffc3c3; border-radius: 12px; color: var(--warning); font-weight: 600; }}
+
+    @media (max-width: 900px) {{
       .grid {{ grid-template-columns: 1fr; }}
+      .status-pill {{ width: 100%; }}
+    }}
+
+    @keyframes floatIn {{
+      from {{ transform: translateY(6px); opacity: 0; }}
+      to {{ transform: translateY(0); opacity: 1; }}
     }}
   </style>
 </head>
 <body>
-  <div class=\"wrap\">
-    <div class=\"header\">
-      <h1>Spam Detector</h1>
-      <p>Paste a full email message to evaluate whether it is spam or ham.</p>
-    </div>
-
-    {error_html}
-
-    <div class=\"grid\">
-      <form class=\"card\" method=\"post\" action=\"/predict\">
-        <label for=\"message\">Email message</label>
-        <textarea id=\"message\" name=\"message\" placeholder=\"Paste the email text here...\">{safe_message}</textarea>
-        <button type=\"submit\">Analyze</button>
-        <div class=\"footer\">Model: {escape(str(DEFAULT_MODEL_PATH))}</div>
-        <div class=\"footer\">Threshold: {DEFAULT_THRESHOLD:.2f} | Low-confidence label: {escape(DEFAULT_LOW_CONF_LABEL)}</div>
-        <div class=\"footer\">Allowlist: {escape(str(DEFAULT_WHITELIST_PATH))}</div>
-      </form>
-
-      <div class=\"card\">
-        <div class=\"{label_class}\">
-          <h2>{result_text}</h2>
-          <div class=\"meta\">Confidence: {confidence_text}</div>
-          <div class=\"meta\">{escape(rule_text)}</div>
+  <div class=\"bg-orb orb-one\"></div>
+  <div class=\"bg-orb orb-two\"></div>
+  <div class=\"page\">
+    <div class=\"container\">
+      <header class=\"hero\">
+        <div>
+          <div class=\"eyebrow\">AI message classifier</div>
+          <h1>Spam Detector</h1>
+          <p>Paste a full email or SMS message. Get a prediction with confidence and top terms.</p>
         </div>
-        <div class=\"meta\">Top keywords</div>
-        <ul>
-          {keywords_items}
-        </ul>
+        <div class=\"status-pill\">
+          <span>Service status</span>
+          <strong>Ready for checks</strong>
+        </div>
+      </header>
+
+      {error_html}
+
+      <div class=\"grid\">
+        <form class=\"card\" method=\"post\" action=\"/predict\">
+          <label for=\"message\">Message</label>
+          <textarea id=\"message\" name=\"message\" placeholder=\"Paste the email or SMS text here...\">{safe_message}</textarea>
+          <div class=\"actions\">
+            <button type=\"submit\">Analyze</button>
+            <span class=\"hint\">Tip: include subject lines and signatures for best results.</span>
+          </div>
+          <div class=\"meta-stack\">
+            <div>Model: {escape(str(DEFAULT_MODEL_PATH))}</div>
+            <div>Threshold: {DEFAULT_THRESHOLD:.2f} | Low-confidence label: {escape(DEFAULT_LOW_CONF_LABEL)}</div>
+            <div>Allowlist: {escape(str(DEFAULT_WHITELIST_PATH))}</div>
+          </div>
+        </form>
+
+        <div class=\"card\">
+          <div class=\"{label_class}\">
+            <div class=\"result-label\">Prediction</div>
+            <h2>{result_text}</h2>
+            <div class=\"meta\">Confidence: {confidence_text}</div>
+            <div class=\"meta\">{escape(rule_text)}</div>
+          </div>
+          <div class=\"headline\">Top keywords</div>
+          <ul class=\"keywords\">
+            {keywords_items}
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 </body>
 </html>"""
     return HTMLResponse(html)
+
+
+@app.get("/health", response_class=JSONResponse)
+def health() -> JSONResponse:
+    return JSONResponse({"status": "ok"})
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -229,18 +311,18 @@ def predict(message: str = Form("")) -> HTMLResponse:
 
     result = predict_with_confidence(model, [message])[0]
     label, confidence, rule = apply_rules(
-      label=result["label"],
-      confidence=result["confidence"],
-      text=message,
-      whitelist=get_whitelist(),
-      threshold=DEFAULT_THRESHOLD,
-      low_confidence_label=DEFAULT_LOW_CONF_LABEL,
+        label=result["label"],
+        confidence=result["confidence"],
+        text=message,
+        whitelist=get_whitelist(),
+        threshold=DEFAULT_THRESHOLD,
+        low_confidence_label=DEFAULT_LOW_CONF_LABEL,
     )
     keywords = top_keywords(model, message)
     return render_page(
-      message=message,
-      result_label=label,
-      confidence=confidence,
-      keywords=keywords,
-      rule=rule,
+        message=message,
+        result_label=label,
+        confidence=confidence,
+        keywords=keywords,
+        rule=rule,
     )
