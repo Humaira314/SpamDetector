@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spamdetector"
+version = "0.1.0"
+description = "AI-based SMS spam detector"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "pandas",
+  "numpy",
+  "scikit-learn",
+  "nltk",
+  "matplotlib",
+  "seaborn",
+  "joblib",
+  "fastapi",
+  "uvicorn",
+  "python-multipart",
+]
+
+[project.scripts]
+spamdetector = "spamdetector.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

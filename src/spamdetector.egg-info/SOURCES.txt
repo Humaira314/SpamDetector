@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+src/spamdetector/__init__.py
+src/spamdetector/cli.py
+src/spamdetector/pipeline.py
+src/spamdetector/train.py
+src/spamdetector/web.py
+src/spamdetector.egg-info/PKG-INFO
+src/spamdetector.egg-info/SOURCES.txt
+src/spamdetector.egg-info/dependency_links.txt
+src/spamdetector.egg-info/entry_points.txt
+src/spamdetector.egg-info/requires.txt
+src/spamdetector.egg-info/top_level.txt

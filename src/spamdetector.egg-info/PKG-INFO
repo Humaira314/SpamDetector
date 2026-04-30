@@ -1,0 +1,112 @@
+Metadata-Version: 2.4
+Name: spamdetector
+Version: 0.1.0
+Summary: AI-based SMS spam detector
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scikit-learn
+Requires-Dist: nltk
+Requires-Dist: matplotlib
+Requires-Dist: seaborn
+Requires-Dist: joblib
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: python-multipart
+
+# AI-Based Spam Message Detector
+
+This project builds an AI/NLP system to classify SMS messages as "ham" or "spam" using TF-IDF features and baseline machine learning models (Multinomial Naive Bayes and Linear SVM). It includes a CLI for training and prediction plus a notebook for EDA and model comparison.
+
+## Features
+- NLP preprocessing with tokenization, stop-word removal, and optional stemming
+- Real-time message prediction with confidence scores
+- Model comparison (Naive Bayes vs Linear SVM)
+- Reproducible training and evaluation pipeline
+- Notebook for EDA and reporting
+
+## Project Structure
+- `src/spamdetector/` - core package (pipeline, training, CLI)
+- `scripts/` - dataset download and preparation
+- `data/` - local datasets (not tracked)
+- `models/` - saved model artifacts (not tracked)
+- `notebooks/` - EDA and modeling notebook
+- `reports/` - optional figures/exports
+
+## Setup
+```bash
+pip install -r requirements.txt
+pip install -e .
+```
+
+The editable install adds a `spamdetector` command so you do not need `PYTHONPATH`.
+
+Optional NLTK data (stopwords):
+```bash
+python -c "import nltk; nltk.download('stopwords')"
+```
+
+## Dataset Download and Preparation
+This project expects the UCI SMS Spam Collection dataset. The helper script downloads and prepares a CSV at `data/processed/sms.csv`.
+
+```bash
+python scripts/download_prepare.py --download --prepare
+```
+
+If you already downloaded the dataset manually, place `SMSSpamCollection` under `data/raw/` and run:
+```bash
+python scripts/download_prepare.py --prepare
+```
+
+## Train and Evaluate
+Train both models and store the best one in `models/`:
+```bash
+spamdetector train --data data/processed/sms.csv --model both
+```
+
+Evaluate a saved model:
+```bash
+spamdetector evaluate --data data/processed/sms.csv --model-path models/best_model.joblib
+```
+
+## Predict
+Predict a single message:
+```bash
+spamdetector predict --model-path models/best_model.joblib --text "Win a free prize now"
+```
+
+Predict a file (one message per line):
+```bash
+spamdetector predict --model-path models/best_model.joblib --file data/sample_messages.txt
+```
+
+## Web Interface
+Train a model first so `models/best_model.joblib` exists:
+```bash
+spamdetector train --data data/processed/sms.csv --model both
+```
+
+Run the FastAPI app:
+```bash
+uvicorn spamdetector.web:app --reload
+```
+
+Open http://127.0.0.1:8000 and paste a full email message.
+
+Optional: point to a different model path:
+```bash
+$env:SPAMDETECTOR_MODEL="models/best_model.joblib"
+```
+
+## Notebook
+Open the notebook in `notebooks/` to run EDA and compare models. Run the data preparation step first so `data/processed/sms.csv` is available.
+
+## Notes
+- The SVM model is calibrated by default to produce probability scores.
+- If NLTK stopwords are unavailable, the pipeline falls back to scikit-learn stopwords.
+
+## Future Work
+- Hyperparameter tuning and additional features
+- Deep learning models (RNN/LSTM)
+- UI or API integration

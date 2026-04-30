@@ -1,0 +1,4 @@
+# One domain per line. Subdomains are allowed automatically.
+# Example: github.com will allow mail.github.com
+
+github.com

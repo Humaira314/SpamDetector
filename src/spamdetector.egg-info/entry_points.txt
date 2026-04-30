@@ -1,0 +1,2 @@
+[console_scripts]
+spamdetector = spamdetector.cli:main
