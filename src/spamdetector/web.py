@@ -287,7 +287,7 @@ def render_page(
     return HTMLResponse(html)
 
 
-@app.get("/health", response_class=JSONResponse)
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
